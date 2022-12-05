@@ -1769,6 +1769,8 @@ def add_module_arguments(parser):
 # MAIN CODE - PROGRAM STARTS HERE!
 # --------------------------------
 
+print("Nebel version 20221205")
+
 # Basic initialization
 if not os.path.exists('nebel.cfg'):
   print('WARN: No nebel.cfg file found in this directory.')
