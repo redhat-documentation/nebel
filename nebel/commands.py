@@ -1118,8 +1118,8 @@ class Tasks:
                     rawtitle = result.group(1)
                     break
             if rawtitle == '':
-                print('ERROR: _scan_for_title: No title found in file: ' + filepath)
-                sys.exit()
+                print('WARNING: _scan_for_title: No title found in file: ' + filepath)
+                return ""
         return self.context.resolve_raw_attribute_value(rawtitle)
 
 
@@ -1228,10 +1228,11 @@ class Tasks:
                             anchorid = rawanchorid.replace('{context}', currentcontext)
                             rootofid = rawanchorid.replace('_{context}', '')
                         else:
-                            print('ERROR: Found ID with embedded {context}, but no context attribute defined')
+                            print('WARNING: Found ID with embedded {context}, but no context attribute defined')
                             print('    file: ' + filepath)
                             print('    ID:   ' + rawanchorid)
-                            sys.exit()
+                            anchorid = rawanchorid.replace('{context}', '')
+                            rootofid = rawanchorid.replace('_{context}', '')
                     else:
                         anchorid = rawanchorid
                         rootofid = rawanchorid
@@ -1282,10 +1283,10 @@ class Tasks:
                 elif action == INCLUDE_LINE:
                     currentdir, basename = os.path.split(filepath)
                     includefile = os.path.normpath(os.path.join(currentdir, includefile))
-                    if not os.path.exists(includefile):
-                        print('ERROR: Included file does not exist: ' + includefile)
-                        sys.exit()
-                    anchorid_dict, legacyid_dict, rootofid_dict, metadata_list = self._parse_file_for_anchorids(anchorid_dict, legacyid_dict, rootofid_dict, metadata_list, booktitle_slug, includefile)
+                    if os.path.exists(includefile):
+                        anchorid_dict, legacyid_dict, rootofid_dict, metadata_list = self._parse_file_for_anchorids(anchorid_dict, legacyid_dict, rootofid_dict, metadata_list, booktitle_slug, includefile)
+                    else:
+                        print('WARNING: Included file does not exist: ' + includefile)
                     tentative_anchor_id = ''
                     tentative_root_of_id = ''
                     tentative_context_of_id = None
@@ -1767,6 +1768,8 @@ def add_module_arguments(parser):
 
 # MAIN CODE - PROGRAM STARTS HERE!
 # --------------------------------
+
+print("Nebel version 20221205")
 
 # Basic initialization
 if not os.path.exists('nebel.cfg'):
