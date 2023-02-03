@@ -46,6 +46,10 @@ class NebelContext:
         self.CONCEPT_PREFIX = 'con-'
         self.REFERENCE_PREFIX = 'ref-'
 
+        # pre-populate the {nbsp} attribute
+        self.update_attribute("nbsp","{nbsp}")
+        
+
     def initializeFromFile(self, configfile):
         # print 'Initializing from file: ' + configfile
         config = six.moves.configparser.RawConfigParser(
