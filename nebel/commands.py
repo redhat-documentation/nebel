@@ -164,6 +164,10 @@ class Tasks:
 
 
     def adoc_split(self, args):
+
+        # Misha 2025/05/08: clear out links.csv if we are creating it
+        open("links.csv","w").close()
+
         frompattern = os.path.normpath(args.FROM_FILE)
         fromfiles = glob.glob(frompattern.replace('{}', '*'))
         if args.attribute_files:
@@ -187,10 +191,15 @@ class Tasks:
             if args.category_prefix:
                 categoryname = args.category_prefix + '-' + categoryname
             metadata['Category'] = categoryname
+            # Misha 2025/06/28 fixing weird main file processing
+            metadata['Type'] = "main"
+            metadata['ModuleID'] = "main"
+            metadata['Title'] = "main"
+
             equalssigncount = 0
             lines = self._resolve_includes(fromfile)
             indexofnextline = 0
-            self._parse_from_annotated(metadata, fromfile, lines, indexofnextline, equalssigncount, selectedconditions, args.timestamp)
+            self._parse_from_annotated(metadata, fromfile, lines, indexofnextline, equalssigncount, selectedconditions, args.timestamp, parentcontext = "main")
 
     def _parse_from_annotated(
             self,
@@ -202,8 +211,12 @@ class Tasks:
             selectedconditions = None,
             timestamp = False,
             showcontentstack = [],
-            currconditionstack = []
+            currconditionstack = [],
+            prefixlines = [],
+            parentcontext = "",
+            parentpathname = ""
     ):
+
         # Define some enums for state machine
         REGULAR_LINES = 0
         TENTATIVE_PARSING = 1
@@ -238,18 +251,50 @@ class Tasks:
         regexp_title = re.compile(r'^(=+)\s+(\S.*)')
 
         childmetadata = {}
+
         parsedcontentlines = []
+
+        # Misha 2025/05/08: processing of context for links
+
+        if ('Type' in metadata) and (metadata['Type'].lower() == 'assembly') and ('ModuleID' in metadata):
+            mycontext = metadata['ModuleID']
+        else:
+            mycontext = parentcontext
+
+        # Misha 2025/05/14: processing links correctly, holding on to assembly path
+        if ('Type' in metadata) and ('ModuleID' in metadata):
+            if (metadata['Type'].lower() == 'assembly') or (parentpathname == ""):
+                mypathname = os.path.join(self.context.moduleFactory.module_dirpath(metadata),self.context.moduleFactory.name_of_file(metadata))
+            else:
+                mypathname = parentpathname
+        else:
+            mypathname = parentpathname
+
+        # Misha 2025/06/28 fixing weird main file processing
+        count_regular_lines = 0
 
         while not module_complete:
             # Check for end of file
             if indexofnextline >= len(lines):
                 if ('Type' in metadata) and (metadata['Type'].lower() == 'skip'):
+                    #debug output
+                    print("Ended without saving")
+
                     # Don't save current content
                     return ('', len(lines))
                 elif 'Type' in metadata:
-                    generated_file = self.context.moduleFactory.create(metadata, parsedcontentlines, clobber=True)
+                    # Misha 2025/06/28 fixing weird main file processing
+                    # Misha 2025/06/30 create new main correctly
+                    if metadata['Type'] == 'main':
+                        if not context:
+                            return ('', len(lines)) # try to simulate the old way
+                        if count_regular_lines > 0:
+                            print("WARNING: main file not marked assembly, outputting main_new.adoc, CONVERSION CAN BE WEIRD")
+                    generated_file = self.context.moduleFactory.create(metadata, parsedcontentlines, clobber=True, prefixlines=prefixlines, context=args.new_context, parentcontext=parentcontext, assemblypathname=mypathname)
                     return (generated_file, len(lines))
                 else:
+                    #debug output
+                    print("Ended without saving 2")
                     return ('', len(lines))
 
             if isconditionalizeactive:
@@ -321,10 +366,17 @@ class Tasks:
 
             if parsing_state == REGULAR_LINES:
                 line = lines[indexofnextline]
+
                 if (regexp_metadata.search(line) is None) and (regexp_id_line1.search(line) is None) and (regexp_id_line2.search(line) is None) and (regexp_title.search(line) is None):
                     # Regular line
                     parsedcontentlines.append(line)
                     indexofnextline += 1
+                    # Misha 2025/06/28 fixing weird main file processing
+                    # increase the count, with some exceptions
+                    # nonzero triggers the warning if in the main file
+                    if (line.strip() != "") and not (line.find("include::")==0 and line.find("attr")>0) and not (line[0]==':'):
+                            count_regular_lines += 1
+
                 else:
                     # Switch state
                     parsing_state = TENTATIVE_PARSING
@@ -338,6 +390,11 @@ class Tasks:
                 # Skip blank lines
                 if line.strip() == '':
                     continue
+
+                # skip setting lines
+                if line[0] == ':':
+                    continue
+
                 # Parse title line
                 result = regexp_title.search(line)
                 if result is not None:
@@ -367,7 +424,23 @@ class Tasks:
                     # Perform action
                     if action == CREATE_SUBSECTION:
                         # It's a simple subsection, not a module or assembly
+
+                        # Misha 2025/06/28: save link(s) if present
+                        link_id=None
+                        for potential_id in tentativecontentlines:
+                            result = regexp_id_line1.search(potential_id)
+                            if result is not None:
+                                link_id = result.group(1)
+                            result = regexp_id_line2.search(potential_id)
+                            if result is not None:
+                                link_id = result.group(1)
+                        if link_id:
+                            link_line = link_id+","+mypathname+"#"+metadata["ModuleID"]+"_"+parentcontext+"\n"
+                            with open("links.csv","a") as f:
+                                f.write(link_line)
+
                         # Reformat heading as a simple heading (starts with .)
+
                         lastline = tentativecontentlines.pop()
                         lastline = '.' + lastline.replace('=', '').lstrip() + '\n'
                         # Put back tentative lines
@@ -383,6 +456,7 @@ class Tasks:
                         childmetadata['ConversionStatus'] = 'raw'
                         if timestamp: childmetadata['ConversionDate'] = str(datetime.datetime.now())
                         childmetadata['ConvertedFromFile'] = fromfilepath
+
                         (generated_file, indexofnextline) = self._parse_from_annotated(
                             childmetadata,
                             fromfilepath,
@@ -392,20 +466,31 @@ class Tasks:
                             selectedconditions,
                             timestamp,
                             showcontentstack,
-                            currconditionstack
+                            currconditionstack,
+                            # Misha 2025/05/06 create prefixlines from the definition lines before the title
+                            prefixlines = [x for x in tentativecontentlines if (len(x)>0 and x[0]==':')],
+                            parentcontext = mycontext,
+                            parentpathname = mypathname
                         )
                         #if ('Type' in childmetadata) and (childmetadata['Type'].lower() == 'assembly'):
                         #    print ('include::' + generated_file + '[leveloffset=+1]')
                         childmetadata = {}
                         parsedcontentlines.append('\n')
                         if generated_file:
-                            parsedcontentlines.append('include::../../' + generated_file + '[leveloffset=+1]\n\n')
+                            # Misha 2025/06/30 create new main correctly
+                            prefixpath = ""
+                            level_offset_string = '[]'
+                            if metadata["Type"] != "main":
+                                prefixpath = "../../"
+                                level_offset_string = '[leveloffset=+1]'
+
+                            parsedcontentlines.append('include::' + prefixpath + generated_file + level_offset_string + '\n\n')
                     elif action == END_CURRENT_MODULE:
                         if metadata['Type'].lower() == 'skip':
                             # Don't save current content and back up to the start of the tentative block
                             return ('', index_of_tentative_block)
                         # Save the current content
-                        generated_file = self.context.moduleFactory.create(metadata, parsedcontentlines, clobber=True)
+                        generated_file = self.context.moduleFactory.create(metadata, parsedcontentlines, clobber=True, prefixlines=prefixlines, context=True, parentcontext=parentcontext, assemblypathname=mypathname)
                         return (generated_file, index_of_tentative_block)
                     # Switch state
                     parsing_state = REGULAR_LINES
@@ -496,8 +581,25 @@ class Tasks:
         regexp_title = re.compile(r'^(=+)\s+(\S.*)')
         regexp_tag_begin = re.compile(r'tag::([^\[]+)\[\]')
         regexp_tag_end   = re.compile(r'end::([^\[]+)\[\]')
+
+        # Misha 2024/06/30 adding //literal
+        regexp_literal = re.compile(r'^//\s*literal\s*$')
+
+        next_line_literal = False
+
+
         with open(file, 'r') as f:
             for line in f:
+                # Misha 2025/06/30 add //literal
+                if args.new_context:
+                    if next_line_literal:
+                        linesinfile.append(line)
+                        next_line_literal = False
+                        continue
+                    if regexp_literal.search(line):
+                        next_line_literal = True
+                        continue
+
                 if istaggingactive:
                     result = regexp_tag_begin.search(line)
                     if result is not None:
@@ -1818,6 +1920,7 @@ split_parser.add_argument('FROM_FILE', help='Annotated AsciiDoc file (ending wit
 split_parser.add_argument('--legacybasedir', help='Base directory for annotated file content. Subdirectories of this directory are used as default categories.')
 split_parser.add_argument('--category-prefix', help='When splitting an annotated file, add this prefix to default categories.')
 split_parser.add_argument('-a', '--attribute-files', help='Specify a comma-separated list of attribute files')
+split_parser.add_argument('-n', '--new-context', help='Implement the new (2025) context templates and create links.csv',action='store_true')
 split_parser.add_argument('--conditions', help='Define a comma-separated list of condition attributes, for resolving ifdef and ifndef directives')
 split_parser.add_argument('--timestamp', help='Generate a timestamp in the generated module and assembly files', action='store_true')
 split_parser.set_defaults(func=tasks.adoc_split)
@@ -1875,7 +1978,7 @@ csv_parser.add_argument('ASSEMBLY_OR_BOOK_FILE', help='Path to the assembly or b
 csv_parser.add_argument('-c', '--cols', help='Specify a comma-separated list of column headers')
 csv_parser.set_defaults(func=tasks.csv)
 
-
 # Now, parse the args and call the relevant sub-command
 args = parser.parse_args()
+
 args.func(args)

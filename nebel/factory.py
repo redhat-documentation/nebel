@@ -22,6 +22,11 @@ class ModuleFactory:
 
     def name_of_file(self, metadata):
         type = metadata['Type'].lower()
+
+        # Misha 2025/06/28 fixing failure to output main file
+        if type=="main":
+            return("main-new.adoc")
+
         moduleid = metadata['ModuleID']
         if not moduleid.endswith('{context}'):
             coremoduleid = moduleid
@@ -54,7 +59,10 @@ class ModuleFactory:
     def module_dirpath(self, metadata):
         category = metadata['Category']
         type = metadata['Type'].lower()
-        if type == 'assembly':
+        # Misha 2025/06/28 fixing failure to output main file
+        if type == 'main':
+            return(".")
+        elif type == 'assembly':
             return os.path.join(self.context.ASSEMBLIES_DIR, category)
         elif type in ['procedure', 'concept', 'reference', 'module']:
             return os.path.join(self.context.MODULES_DIR, category)
@@ -65,28 +73,84 @@ class ModuleFactory:
     def module_or_assembly_path(self, metadata):
         return os.path.join(self.module_dirpath(metadata), self.name_of_file(metadata))
 
-    def create(self, metadata, filecontents = None, clobber = False):
+    # Misha 2025/05/06: added support fot context creation/ID referencing and for prefixlines for metadata
+    def create(self, metadata, filecontents = None, clobber = False, prefixlines = [], context = False, parentcontext = "", assemblypathname = ""):
+
+
         type = metadata['Type'].lower()
         filename = self.name_of_file(metadata)
         dirpath = self.module_dirpath(metadata)
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
         filepath = os.path.join(dirpath, filename)
+        #debug output
+        print(f"create {filepath}")
         if os.path.exists(filepath) and not clobber:
             print('INFO: File already exists, skipping: ' + filename)
             return filepath
         with open(filepath, 'w') as filehandle:
+            # Misha 2025/05/06: added context for assembly
+            if context and type=="assembly":
+                filehandle.write("ifdef::context[:parent-context: {context}]\n")
+
+
+            # Misha 2025/05/06: added prefixlines
+            if context:
+                for l in prefixlines:
+                    filehandle.write(l)
             filehandle.write('// Metadata created by nebel\n')
             filehandle.write('//\n')
             for field in self.context.optionalMetadataFields:
                 if (field in metadata) and (field.lower() != 'title') and (field.lower() != 'includefiles'):
                     filehandle.write('// ' + field + ': ' + metadata[field] + '\n')
             filehandle.write('\n')
-            filehandle.write('[id="' + metadata['ModuleID'] + '"]\n')
+
+
+            # Misha 2025/05/06: added context referencing
+            module_id=metadata['ModuleID']
+            if context:
+                module_id+="_{context}"
+            # Misha 2025/06/30 no header for main
+            if not (('Type' in metadata) and (metadata['Type']=='main')):
+                filehandle.write('[id="' + module_id + '"]\n')
+
+            # Misha 2025/05/08: added links.csv
+            # Misha 2025/06/30 no link exists for main
+            if context and not (('Type' in metadata) and (metadata['Type']=='main')):
+                links_csv=open("links.csv","a")
+                if 'ConvertedFromID' in metadata:
+                    original_id=metadata['ConvertedFromID']
+                else:
+                    original_id=metadata['ModuleID']
+                link_context=parentcontext
+                if link_context.strip()=="":
+                    link_context="{context}"
+                links_csv.write(original_id+","+assemblypathname+"#"+metadata['ModuleID']+"_"+link_context+"\n")
+                links_csv.close()
+
             if filecontents is not None:
+
                 # If filecontents is provided, write the contents verbatim
-                filehandle.write('= ' + metadata['Title'] + '\n')
+                # Misha 2025/06/30 no header for main
+                if not (('Type' in metadata) and (metadata['Type']=='main')):
+                    filehandle.write('= ' + metadata['Title'] + '\n')
+
+                # Misha 2025/05/06: added context for assembly
+                # Misha 2025/07/02: handle context for main
+                if context and type in ["assembly","main"]:
+                    filehandle.write("\n:context: " + metadata['ModuleID'] + "\n")
+                    if filecontents[0].strip() != "":
+                        filehandle.write("\n")
+
+
                 filehandle.writelines(filecontents)
+
+                # Misha 2025/05/06: added context for assembly
+                if context and type=="assembly":
+                    filehandle.write("ifdef::parent-context[:context: {parent-context}]\n")
+                    filehandle.write("ifndef::parent-context[:!context:]\n")
+
+
                 return filepath
             elif type == 'module':
                 # Cannot use a template, because we do not know the exact module type

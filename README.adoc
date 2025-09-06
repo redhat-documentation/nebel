@@ -87,7 +87,7 @@ modules/CATEGORY/TYPE-MODULE_ID_.adoc
 
 `MODULE_ID`:: The unique ID for the module. The format is words separated by hyphens. In a module's file name, `MODULE_ID` should be identical to the anchor ID that is defined in the module and attached to the module's title.
 
-For example, consider the `modules/install/proc-intalling-packages.adoc` file. The `modules` category is `install` and the content of this file would start with: 
+For example, consider the `modules/install/proc-intalling-packages.adoc` file. The `modules` category is `install` and the content of this file would start with:
 
 ----
 [id="installing-packages"]
@@ -104,7 +104,7 @@ assemblies/CATEGORY/assembly-MODULE_ID.adoc
 ----
 
 `CATEGORY` is used in the same way as the categories for modules.
-In particular, closely related assemblies and modules should share the same category. For example, consider the `assemblies/install/assembly-how-packages-improve-performance.adoc` file. The `assemblies` category is `install` and the content of this file would start with: 
+In particular, closely related assemblies and modules should share the same category. For example, consider the `assemblies/install/assembly-how-packages-improve-performance.adoc` file. The `assemblies` category is `install` and the content of this file would start with:
 
 ----
 [id="how-packages-improve-performance"]
@@ -165,7 +165,7 @@ For example, in the `assemblies/installing-on-apache-karaf/assembly-install-kara
 \include::../../modules/installing-on-apache-karaf/proc-creating-karaf-users.adoc[leveloffset=+1]
 ----
 
-. In the directory that contains the `nebel.cfg` file, run the following command:  
+. In the directory that contains the `nebel.cfg` file, run the following command:
 +
 ----
 nebel create-from assemblies/installing-on-apache-karaf/assembly-install-karaf-for-administrators.adoc
@@ -237,14 +237,14 @@ you can run the command again and specify only the new category or categories.
 [id="splitting-content"]
 == Splitting content in one file into assemblies and modules
 
-You can split an existing AsciiDoc file into assemblies and modules using Nebel's annotation approach. 
-Content that you want to convert must be organized in sections that lend themselves to being assemblies, concept modules, procedure modules, or reference modules. 
+You can split an existing AsciiDoc file into assemblies and modules using Nebel's annotation approach.
+Content that you want to convert must be organized in sections that lend themselves to being assemblies, concept modules, procedure modules, or reference modules.
 
 There are two main use cases for using `nebel split`:
 
-* You want to convert legacy content to modularized content. In this situation, you iteratively add annotations and run `nebel split` until you get the output that you want. Thereafter, you maintain the assemblies and modules created by running `nebel split`. That is, you update the assembly and module files; you no longer update the legacy content. 
+* You want to convert legacy content to modularized content. In this situation, you iteratively add annotations and run `nebel split` until you get the output that you want. Thereafter, you maintain the assemblies and modules created by running `nebel split`. That is, you update the assembly and module files; you no longer update the legacy content.
 
-* Fewer, larger files are preferred over many, smaller, assembly and module files. Usually, this goes with a preference for shorter headings in place of the longer headings that have the distinguishing qualifications required in modular documentation. Upstream communities often prefer larger files and shorter headings. In this situation, each time you fetch the larger files, for example, to reuse the content downstream, there is a script that runs `nebel split` to create the assemblies and modules. You maintain the larger files; you do not edit the generated assemblies and modules. 
+* Fewer, larger files are preferred over many, smaller, assembly and module files. Usually, this goes with a preference for shorter headings in place of the longer headings that have the distinguishing qualifications required in modular documentation. Upstream communities often prefer larger files and shorter headings. In this situation, each time you fetch the larger files, for example, to reuse the content downstream, there is a script that runs `nebel split` to create the assemblies and modules. You maintain the larger files; you do not edit the generated assemblies and modules.
 
 The following topics provide information and instructions for doing this:
 
@@ -260,7 +260,7 @@ To prepare a non-modularized AsciiDoc file for conversion to assemblies and modu
 
 .Prerequisites
 
-* You edited the content to be split so that it is easy to distinguish whether a section is an assembly, a concept module, a procedure module or a reference module.  
+* You edited the content to be split so that it is easy to distinguish whether a section is an assembly, a concept module, a procedure module or a reference module.
 
 .Procedure
 
@@ -273,11 +273,11 @@ For example, the top-level heading might look like this:
 = Debezium Connector for MySQL
 ----
 
-. Decide which _category_ this content should be in. 
+. Decide which _category_ this content should be in.
 
 . Determine the content type, that is, whether this section should be an assembly, a concept module, a procedure module, or a reference module. As this is a top-level heading, it is likely that you would want to convert the initial content into an assembly.
 
-. Insert comments that specify the category and the type. 
+. Insert comments that specify the category and the type.
 +
 For example, suppose that the section should be an assembly in the `debezium-using` category. Add the following comments (annotations) to the file immediately before the heading:
 +
@@ -288,18 +288,18 @@ For example, suppose that the section should be an assembly in the `debezium-usi
 = Debezium Connector for MySQL
 ----
 +
-The default behavior is that the category you specify for the top-level heading 
+The default behavior is that the category you specify for the top-level heading
 applies to all subheadings.
 +
 If you do not specify the category, it defaults to the name of the directory containing the file being split or to a directory named `default`.
 
-. Move down to the next section heading, which is most likely a subheading 
-of the preceding heading. In other words, the next section heading is probably 
-indicated by two equals signs, `==`. 
+. Move down to the next section heading, which is most likely a subheading
+of the preceding heading. In other words, the next section heading is probably
+indicated by two equals signs, `==`.
 
 . To convert this subheading and its content to a module, decide the content's type.
 
-. Add a comment that specifies the content's type as 
+. Add a comment that specifies the content's type as
 `concept`, `procedure`, or `reference`. For example:
 +
 ----
@@ -309,14 +309,14 @@ indicated by two equals signs, `==`.
 ----
 +
 It is _not_ necessary to specify a `Category` annotation for
-subheadings. 
+subheadings.
 +
-Any subheadings in this module section do not require annotations. 
-When you run Nebel to split the content, the utility 
-maps any subheadings here to subheadings in the enclosing module. 
-This is the default behavior. 
+Any subheadings in this module section do not require annotations.
+When you run Nebel to split the content, the utility
+maps any subheadings here to subheadings in the enclosing module.
+This is the default behavior.
 
-. _Optional._ To override the section's anchor ID, which appears in 
+. _Optional._ To override the section's anchor ID, which appears in
 double square brackets, `[[  ]]`, insert a `ModuleID` annotation before the heading.
 For example:
 +
@@ -328,7 +328,7 @@ For example:
 ----
 +
 The generated module or assembly will have the anchor ID that you specify
-in the `ModuleID` annotation. 
+in the `ModuleID` annotation.
 
 . _Optional_. To override the section's title, insert a `Title` annotation before the heading.
 For example:
@@ -342,11 +342,11 @@ For example:
 ----
 +
 The generated module or assembly will have the title that you specify
-in the `Title` annotation. 
+in the `Title` annotation.
 
 . Proceed through the file, adding `Category`, `Type`, `ModuleID`, and `Title` annotations before subsection headings as needed.
 
-. Save and close the file. 
+. Save and close the file.
 
 .Examples
 
@@ -357,17 +357,17 @@ in the `Title` annotation.
 .Next steps
 
 To generate assemblies and modules for a book, repeat this procedure for each of
-the book's files. 
+the book's files.
 
 [id="generating-assemblies-and-modules-from-annotated-files"]
 === Generating assemblies and modules from annotated files
 
-When an AsciiDoc file has modular documentation annotations, 
-you can run Nebel to convert it to assemblies and modules. 
+When an AsciiDoc file has modular documentation annotations,
+you can run Nebel to convert it to assemblies and modules.
 
 .Prerequisites
 
-* You added `Type` annotations, and optionally `Category`, `Title` and `ModuleID` annotations, to one or more AsciiDoc files. 
+* You added `Type` annotations, and optionally `Category`, `Title` and `ModuleID` annotations, to one or more AsciiDoc files.
 
 * link:https://github.com/fbolton/nebel[The Nebel utility is installed.]
 
@@ -375,16 +375,16 @@ you can run Nebel to convert it to assemblies and modules.
 
 * The documentation directory in which you want to run `nebel` meets these conditions:
 ** The top-level directory contains a `nebel.cfg` file.
-For example, the `fuse7/docs` directory contains a `nebel.cfg` file. 
-You can copy `nebel.cfg` to a directory if you need to. 
-** The directory is 
+For example, the `fuse7/docs` directory contains a `nebel.cfg` file.
+You can copy `nebel.cfg` to a directory if you need to.
+** The directory is
 <<how-modularized-integration-documentation-repositories-are-organized,organized for modularization.>>
 
 .Procedure
 
-. Open a new shell prompt. 
+. Open a new shell prompt.
 . Navigate to the directory that contains the `nebel.cfg` file.
-. To generate assemblies and modules from one AsciiDoc file, run `nebel` using the following command line format: 
+. To generate assemblies and modules from one AsciiDoc file, run `nebel` using the following command line format:
 +
 `nebel split --legacybasedir LEGACYBASEDIR ANNOTATED_FILE.adoc`
 +
@@ -392,14 +392,14 @@ You can copy `nebel.cfg` to a directory if you need to.
 +
 `ANNOTATED_FILE` is the path to the annotated AsciiDoc file.
 +
-For example, if the annotated file is located at `./connectors/mysql.adoc`, you could run a command like this: 
+For example, if the annotated file is located at `./connectors/mysql.adoc`, you could run a command like this:
 +
 `nebel split --legacybasedir . connectors/mysql.adoc`
 +
 This would store the generated assemblies in the `assemblies/connectors` directory and the generated modules in the `modules/connectors` directory.
 The generated category defaults to `connectors`, because `connectors` is the immediate subdirectory of the specified `LEGACYBASEDIR` (`.` directory).
 +
-Alternatively, you can specify only the name of the annotated file, for example: 
+Alternatively, you can specify only the name of the annotated file, for example:
 +
 `nebel split upstream/debezium/debezium-1.2/documentation/modules/ROOT/pages/connectors/mysql.adoc`
 +
@@ -408,25 +408,25 @@ For example:
 +
 `nebel split --legacybasedir . connectors/{}.adoc`
 
-. _Optional_. After splitting files, you can run Nebel to fix cross-references that changed because of `ModuleID` annotations. For example: 
+. _Optional_. After splitting files, you can run Nebel to fix cross-references that changed because of `ModuleID` annotations. For example:
 +
 `nebel update --fix-links -a upstream/debezium/attributes.adoc,attributes.adoc,attributes-links.adoc -c debezium-using`
 +
-`-a`:: Specifies a comma-separated list of attribute files that that Nebel needs to update references. You must specify the path for the repository's `attributes.adoc` and `attributes-links.adoc` files. If the directory uses any other attributes files, you must specify them as well. This sample command line specifies the `attributes.adoc` file in the `upstream/debezium` directory. 
- 
-`-c`:: Specifies the scope of the content in which Nebel updates links. Specify one or more, comma-separated category names. In this example, Nebel fixes links that are in the `debezium-using` category.  
+`-a`:: Specifies a comma-separated list of attribute files that that Nebel needs to update references. You must specify the path for the repository's `attributes.adoc` and `attributes-links.adoc` files. If the directory uses any other attributes files, you must specify them as well. This sample command line specifies the `attributes.adoc` file in the `upstream/debezium` directory.
+
+`-c`:: Specifies the scope of the content in which Nebel updates links. Specify one or more, comma-separated category names. In this example, Nebel fixes links that are in the `debezium-using` category.
 
 [id="nebel-split-annotations-reference"]
 === Nebel split annotations reference
 
-In a non-modular AsciiDoc file, a Nebel annotation is a one-line 
+In a non-modular AsciiDoc file, a Nebel annotation is a one-line
 comment immediately before a section heading. There cannot be blank lines between the annotation and the heading it applies to. An annotation comment has the following
 format:
 
 `// ANNOTATION_NAME: ANNOTATION_VALUE`
 
-Each annotation that Nebel can interpret 
-and process when splitting large, current files or legacy files into assemblies and modules is described here. 
+Each annotation that Nebel can interpret
+and process when splitting large, current files or legacy files into assemblies and modules is described here.
 
 * <<category>>
 * <<type>>
@@ -437,15 +437,15 @@ and process when splitting large, current files or legacy files into assemblies 
 [id="category"]
 ==== `Category`
 
-This annotation specifies the category for the content in the following section. The category is the 
-subdirectory of the `assemblies` directory or the `modules` directory in which 
-Nebel will store the generated file. After you specify a category for a 
-particular section, it applies to _all_ of its subsections, and, hence, to 
+This annotation specifies the category for the content in the following section. The category is the
+subdirectory of the `assemblies` directory or the `modules` directory in which
+Nebel will store the generated file. After you specify a category for a
+particular section, it applies to _all_ of its subsections, and, hence, to
 all of the assemblies and modules generated from those subsections.
 
 It is typically necessary to set the `Category` annotation on only the  top-level section heading in a file.
 The rest of the subsections in the file are then implicitly mapped to the same category.
-If you do not specify the `Category` annotation, it defaults to one of the following: 
+If you do not specify the `Category` annotation, it defaults to one of the following:
 
 * The directory that contains the AsciiDoc file being split, as indicated by the `--legacybasedir` option in the `nebel split` command
 * The `assemblies/default` and `modules/default` directories, which `nebel split` creates if `--legacybasedir` was not specified in the `nebel split` command
@@ -455,14 +455,14 @@ For example, given the following `Category` annotation:
 // Category: integration-nebel
 // Type: assembly
 [id="splitting-content"]
-== Splitting content 
+== Splitting content
 ----
 
 Nebel creates the `assembly-splitting-content.adoc` file in the `assemblies/integration-nebel/` directory.
 
 [id="type"]
 ==== `Type`
-This annotation Specifies the kind of module to map the following section to. 
+This annotation Specifies the kind of module to map the following section to.
 
 .Descriptions of `Type` annotation values
 [cols='1,4',options="header"]
@@ -482,14 +482,14 @@ This annotation Specifies the kind of module to map the following section to.
 |Maps the section to a reference module.
 
 |`continue`
-|Absorbs the section into the preceding module or assembly. 
-It becomes a subsection of the preceding module or assembly. 
+|Absorbs the section into the preceding module or assembly.
+It becomes a subsection of the preceding module or assembly.
 
 |`skip`
 |Skips the section. It does not appear in the generated assembly or module.
 |===
 
-If you do not specify a `Type` annotation for a section, the section 
+If you do not specify a `Type` annotation for a section, the section
 becomes a subsection of the nearest enclosing module or assembly.
 
 [id="topictype"]
@@ -500,13 +500,13 @@ In other words, you can use either the `TopicType` annotation alias or the `Type
 [id="moduleid"]
 ==== `ModuleID`
 
-This annotation specifies a new value for the section's anchor ID. 
+This annotation specifies a new value for the section's anchor ID.
 In the generated module, the `ModuleID` value
-that you specify in this annotation replaces the ID in the unsplit source file.  
+that you specify in this annotation replaces the ID in the unsplit source file.
 
-If you want the generated section to have a different ID 
-from the content being split, use this annotation instead of changing the existing ID directly. This 
-makes it possible for Nebel to update cross-references to this section so that they specify the new anchor ID. 
+If you want the generated section to have a different ID
+from the content being split, use this annotation instead of changing the existing ID directly. This
+makes it possible for Nebel to update cross-references to this section so that they specify the new anchor ID.
 For example:
 
 ----
@@ -514,10 +514,10 @@ For example:
 // Type: assembly
 // ModuleID: splitting-content-by-inserting-annotations
 [id="splitting-content"]
-== Splitting content 
+== Splitting content
 ----
 
-With these annotations, Nebel creates the `assembly-splitting-content-by-inserting-annotations.adoc` file and the anchor ID in the file is 
+With these annotations, Nebel creates the `assembly-splitting-content-by-inserting-annotations.adoc` file and the anchor ID in the file is
 
 `[id="splitting-content-by-inserting-annotations"]`
 
@@ -537,75 +537,79 @@ For example:
 == Overview
 ----
 
-With these annotations, Nebel creates the `con-overview-of-splitting-asciidoc-by-using-annotations.adoc` file and the heading in the file is 
+With these annotations, Nebel creates the `con-overview-of-splitting-asciidoc-by-using-annotations.adoc` file and the heading in the file is
 
 `== Overview of splitting AsciiDoc by using annotations`
 
 [id="nebel-split-command-reference"]
 === Nebel split command reference
 
-The `nebel split` command, has the following format:  
+The `nebel split` command, has the following format:
 
 [source,options="+macros"]
 ----
 nebel split [-h] [options] FROM_FILE
 ----
 
-Run `nebel split -h` to display help for the options. Replace `FROM_FILE` with the name of the `.adoc` file to split. 
+Run `nebel split -h` to display help for the options. Replace `FROM_FILE` with the name of the `.adoc` file to split.
 
 .Descriptions of `nebel split` command options
 [cols='1,3',options="header"]
 |===
-|Option 
+|Option
 |Description
 
+|`-n`
+|Process using the new (2025) template. `context` definitions are added to all assemblies and `_{context}` is added to all `id` values, this results in the top level assemply `id` including the literal `_{context}` so you must fix this in postprocessing. Also supports attribute definitions at the start of assemblies/modules (before the title) and creates a `links.csv` file with the new link for every original ID.
+
+
 |`-a`
-|One or more attribute files (comma separated) that Nebel needs to resolve links to included files in the assemblies that Nebel generates. Attributes are often in the path names specified in `include` statements. When Nebel splits content, it must be able to resolve (find) included files. 
+|One or more attribute files (comma separated) that Nebel needs to resolve links to included files in the assemblies that Nebel generates. Attributes are often in the path names specified in `include` statements. When Nebel splits content, it must be able to resolve (find) included files.
 
 |`--conditions`
 |One or more condition names (comma separated) specified in `ifdef` or `ifndef` statements in content to be split. Nebel keeps or deletes content tagged with the conditions you specify depending on whether the source specifies `ifdef` or `ifndef`. Nebel does this before it splits the content. +
  +
 A common scenario is that you want to delete upstream-only content when you are splitting content into files that will be used downstream. For example, suppose that you tag upstream-only content with `ifdef::community[]` and you tag downstream-only content with `ifdef::product[]`. When you run `nebel split` and specify `--conditions product`, Nebel keeps content tagged with `product` and deletes content tagged with `community`. +
  +
-Now suppose that you specify `ifndef::community[]` statements to tag content that is downstream-only. To keep content tagged by `ifndef::community[]` in the generated assemblies and modules, run `nebel split` with `--conditions community`. 
+Now suppose that you specify `ifndef::community[]` statements to tag content that is downstream-only. To keep content tagged by `ifndef::community[]` in the generated assemblies and modules, run `nebel split` with `--conditions community`.
  +
-If the content being split contains `ifdef` or `ifndef` statements and you run `nebel split` without specifying the `--conditions` option, Nebel keeps and splits all content. This is likely to lead to erroneous output. 
+If the content being split contains `ifdef` or `ifndef` statements and you run `nebel split` without specifying the `--conditions` option, Nebel keeps and splits all content. This is likely to lead to erroneous output.
 
 |`--category-prefix`
 |Adds the specified prefix to any generated categories, which can be helpful to distinguish categories from one another. For example, suppose that an annotation instructs Nebel to generate some modules in the category `getting-started`. By running `nebel split` and specifying `--category-prefix debezium`, Nebel would add modules to the `debezium-getting-started` category. +
  +
-In a split annotation, if you specify, for example, `// Category: debezium-getting-started` and you run `nebel split` with the `--category debezium` option, Nebel adds files to the `debezium-getting-started` category and not to the `debezium-debezium-getting-started` category. 
+In a split annotation, if you specify, for example, `// Category: debezium-getting-started` and you run `nebel split` with the `--category debezium` option, Nebel adds files to the `debezium-getting-started` category and not to the `debezium-debezium-getting-started` category.
 
 |`--legacybasedir`
 |Specifies the root directory of the file(s) being split. Nebel might use this directory to determine the category for the generated files.
 
 |`--timestamp`
-|Inserts a timestamp in each generated assembly and module file. 
+|Inserts a timestamp in each generated assembly and module file.
 
 |===
 
-Here is an example of a `nebel split` command: 
+Here is an example of a `nebel split` command:
 
 [source,options="nowrap"]
 ----
 nebel split -a attributes.adoc --conditions product --category-prefix debezium --legacybasedir upstream/debezium/debezium-$branch/documentation/modules/ROOT/pages upstream/debezium/debezium-$branch/documentation/modules/ROOT/pages/connectors/postgresql.adoc
 ----
 
-This command: 
+This command:
 
 * Is executed in the `integration/docs` directory.
 * Specifies the `attributes.adoc` file that is in the `docs` directory.
-* Instructs `nebel split` to delete content that is tagged with a condition other than `product`. For example, content enclosed in `ifdef::community[]` and `endif::community[]` statements is deleted. 
-* Specifies that the names of categories that will contain the generated files begin with `debezium`. 
-* Provides the path of the root directory for the file to be split. 
-* Specifies the path of the file to be split. 
+* Instructs `nebel split` to delete content that is tagged with a condition other than `product`. For example, content enclosed in `ifdef::community[]` and `endif::community[]` statements is deleted.
+* Specifies that the names of categories that will contain the generated files begin with `debezium`.
+* Provides the path of the root directory for the file to be split.
+* Specifies the path of the file to be split.
 
 [id="identifying-orphan-files"]
 == Identifying orphan files
 
-You can run Nebel to identify files that are not included in a `master.adoc` file or an assembly. It is then up to you to determine whether to delete an orphan file or add an `include` statement for an orphan file. 
+You can run Nebel to identify files that are not included in a `master.adoc` file or an assembly. It is then up to you to determine whether to delete an orphan file or add an `include` statement for an orphan file.
 
-This is helpful when you regularly run `nebel split` upon fetching updated upstream content. If you change a Nebel annotation in an upstream file, the next time you fetch the file, `nebel split` might create a file with a different name but with the same content as an existing file. For example, suppose an upstream file has this annotation: 
+This is helpful when you regularly run `nebel split` upon fetching updated upstream content. If you change a Nebel annotation in an upstream file, the next time you fetch the file, `nebel split` might create a file with a different name but with the same content as an existing file. For example, suppose an upstream file has this annotation:
 
 ----
 // Type: concept
@@ -618,9 +622,9 @@ You fetch the upstream file and `nebel split` generates the `con-descriptions-of
 // ModuleID: descriptions-of-debezium-events
 ----
 
-The next time that you fetch the upstream file, `nebel split` generates the `con-descriptions-of-debezium-events.adoc` file and includes this file in an assembly. The `con-descriptions-of-events.adoc` file is no longer included in an assembly; it is an orphan file that you can delete. 
+The next time that you fetch the upstream file, `nebel split` generates the `con-descriptions-of-debezium-events.adoc` file and includes this file in an assembly. The `con-descriptions-of-events.adoc` file is no longer included in an assembly; it is an orphan file that you can delete.
 
-The format for running `nebel orphan` is: 
+The format for running `nebel orphan` is:
 
 ----
 nebel orphan [-h] [-c CATEGORY_LIST] [-a ATTRIBUTE_FILES]
@@ -628,17 +632,17 @@ nebel orphan [-h] [-c CATEGORY_LIST] [-a ATTRIBUTE_FILES]
 
 `-h`:: Displays a help message.
 
-`-c CATEGORY_LIST`:: Replace `CATEGORY_LIST` with a comma-separated list of categories. Nebel checks for orphan files by evaluating `include` statements in all `master.adoc` files and in `assemblies` and `modules` subdirectories for only the categories that you specify. If you do not specify the `-c` option, Nebel checks all categories for orphans. 
+`-c CATEGORY_LIST`:: Replace `CATEGORY_LIST` with a comma-separated list of categories. Nebel checks for orphan files by evaluating `include` statements in all `master.adoc` files and in `assemblies` and `modules` subdirectories for only the categories that you specify. If you do not specify the `-c` option, Nebel checks all categories for orphans.
 
-`-a ATTRIBUTE_FILES`:: Replace `ATTRIBUTE_FILES` with a comma-separated list of attribute files that Nebel needs to resolve paths in `include` statements in the categories that the command is checking. 
+`-a ATTRIBUTE_FILES`:: Replace `ATTRIBUTE_FILES` with a comma-separated list of attribute files that Nebel needs to resolve paths in `include` statements in the categories that the command is checking.
 
-For example: 
+For example:
 
 ----
 nebel orphan -c debezium-using -a attributes.adoc,upstream/debezium/attributes.adoc
 ----
 
-This command resolves `include` statements in assemblies that are in the `debezium-using` category. To do this, Nebel needs the toplevel `attributes.adoc` file, and it also needed the `upstream/debezium/attributes.adoc` file. 
+This command resolves `include` statements in assemblies that are in the `debezium-using` category. To do this, Nebel needs the toplevel `attributes.adoc` file, and it also needed the `upstream/debezium/attributes.adoc` file.
 
 [id="renaming-or-moving-files"]
 == Renaming or moving files

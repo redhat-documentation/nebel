@@ -1,0 +1,184 @@
+#!/usr/bin/python
+
+# postprocessing script that replaces links based on links.csv
+# note: Gemini 2.5 Pro was heavily used in the development of this script
+
+import os
+import sys
+import re
+from functools import partial
+
+def find_adoc_files(root_dirs):
+    """
+    Finds all files ending with '.adoc' in a list of root directories,
+    recursively, without following symbolic links. Kudos to Gemini.
+    """
+    for root_dir in root_dirs:
+        if not os.path.isdir(root_dir):
+            print(f"Warning: Directory '{root_dir}' not found. Skipping.", file=sys.stderr)
+            continue
+        for dirpath, _, filenames in os.walk(root_dir, followlinks=False):
+            for filename in filenames:
+                if filename.endswith('.adoc'):
+                    yield os.path.join(dirpath, filename)
+
+def modify_xref(match, filename, path_to_root, links_map):
+    """
+    Replaces an xref match with a new link from the links_map.
+    Kudos to Gemini for the approach.
+    """
+
+    data = match.groupdict()
+    is_link = False
+
+
+    # print(f"DEBUG: Found match in '{filename}': {match.group(0)}")
+    if 'id_angled'in data:  # Matched the <<...>> pattern
+        xref_id = data['id_angled']
+        link_text = data['text_angled'] if data['text_angled'] else xref_id
+    else:  # Matched the xref: or link: pattern
+        xref_id = data['id_macro']
+        link_text = data['text_macro'] if data['text_macro'] else xref_id
+        is_link = (data['macro_keyword'] == "link" )
+
+    # Strip path from ID, keeping only the anchor
+    pos_hash = xref_id.find("#")
+    if pos_hash >= 0:
+        xref_id = xref_id[pos_hash + 1:]
+
+    if not (xref_id in links_map):
+        if not is_link:
+            print(f"Warning: Unrecognized id '{xref_id}' in {match.group(0)} in file {filename}", file=sys.stderr)
+        return match.group(0)
+    elif is_link:
+            print(f"Warning: link: has a recognized id '{xref_id}' in {match.group(0)} in file {filename}; replacing with xref", file=sys.stderr)
+
+
+
+
+    # Always use forward slashes for AsciiDoc/web links.
+    # Replace backslashes from os.path.relpath on Windows.
+    fixed_path_to_root = path_to_root.replace('\\', '/')
+    new_target = f"{fixed_path_to_root}/{links_map[xref_id]}"
+    return f"xref:{new_target}[{link_text}]"
+
+def load_links(filepath="links.csv"):
+    """Loads link mappings from a CSV file into a dictionary."""
+    links = {}
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            for i, line in enumerate(f, 1):
+                clean_line = line.strip()
+                if not clean_line or ',' not in clean_line:
+                    continue  # Skip empty or malformed lines
+
+                parts = clean_line.split(",", 1)
+                id, new_link = parts
+                links[id] = new_link.strip()
+    except FileNotFoundError:
+        print(f"Error: Link file '{filepath}' not found.", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error reading {filepath}: {e}", file=sys.stderr)
+        sys.exit(1)
+    return links
+
+def main():
+    """Main execution function."""
+    # Configuration
+    root_dirs = ['assemblies', 'modules']
+
+    # regular expressions were developed with Gemini as a compiler/decompiler
+    # Verbose mode was added to enable human maintenance of the code
+
+    # Regex for <<...>> with named groups
+    regex1_verbose = re.compile(r"""
+        <<                    # Match the literal opening '<<'
+
+        # Negative lookahead to exclude web links
+        (?!https?://)
+
+        # Capture group for the ID
+        (?P<id_angled>
+            [_a-zA-Z0-9-.:#]+  # One or more allowed characters for an ID
+        )
+
+        # Optional capture group for the link text
+        (
+            ,                 # A literal comma separator
+            \s?               # An optional space
+            (?P<text_angled>
+                [^>]+         # Capture any character except '>'
+            )
+        )?                    # The entire text group is optional
+
+        >>                    # Match the literal closing '>>'
+        """, re.VERBOSE)
+
+    # One regex for both xref: and link:
+    # We capture the keyword ('xref' or 'link') and name the other groups.
+    regex2_verbose = re.compile(r"""
+        # Capture group for the initial keyword
+        (?P<macro_keyword>
+            xref|link         # Match either 'xref' or 'link'
+        )
+
+        :                     # Match the literal ':' separator
+
+        # Negative lookahead to exclude web links
+        (?!https?://)
+
+        # Capture group for the target ID or path
+        (?P<id_macro>
+            [_a-zA-Z0-9-.:#/]+ # One or more allowed characters, including '/' for paths
+        )
+
+        \[                    # A literal opening '['
+
+        # Capture group for the link text
+        (?P<text_macro>
+            [^\]]* # Capture any character except ']' (zero or more times)
+        )
+
+        \]                    # A literal closing ']'
+        """, re.VERBOSE)
+
+    links_map = load_links("links.csv")
+    if not links_map:
+        print("No links loaded from links.csv. Exiting.")
+        return
+
+    print("Replacing links...")
+
+    for adoc_file_path in find_adoc_files(root_dirs):
+        try:
+            with open(adoc_file_path, "r", encoding="utf-8") as f:
+                original_content = f.read()
+
+            path_to_root = os.path.relpath(".", start=os.path.dirname(adoc_file_path))
+
+            replacer_with_context = partial(modify_xref,
+                                            filename=adoc_file_path,
+                                            path_to_root=path_to_root,
+                                            links_map=links_map)
+
+
+            # 1. First, replace all xref:/link: links links
+            content_after_pass1 = re.sub(regex2_verbose, replacer_with_context, original_content)
+
+            # 2. Then, on the result of the first pass, replace all << ... >> links
+            # the order is important here - pass 1 does not create anything new pass 2 would catch
+            modified_content = re.sub(regex1_verbose, replacer_with_context, content_after_pass1)
+
+            if original_content != modified_content:
+                print(f"  Updating {adoc_file_path}")
+                with open(adoc_file_path, "w", encoding="utf-8") as f:
+                    f.write(modified_content)
+
+        except Exception as e:
+            print(f"Error processing file {adoc_file_path}: {e}", file=sys.stderr)
+
+    print("Done.")
+
+if __name__ == "__main__":
+    main()
