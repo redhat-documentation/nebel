@@ -416,6 +416,138 @@ For example:
  
 `-c`:: Specifies the scope of the content in which Nebel updates links. Specify one or more, comma-separated category names. In this example, Nebel fixes links that are in the `debezium-using` category.  
 
+
+[id="modular-docs-content-type-and-abstract-role"]
+=== DITA content-type attribute and abstract role
+
+[role="_abstract"]
+When Nebel generates a modular file with the `nebel split` command, it automatically inserts two markers that are required for AsciiDoc-to-DITA conversion: a content-type attribute and an abstract role.
+
+==== Content-type attribute
+
+Nebel inserts the following AsciiDoc attribute entry immediately before the `[id="..."]` line of every generated file:
+
+----
+:_mod-docs-content-type: <VALUE>
+----
+
+The value is derived from the `Type` annotation as follows:
+
+.Content-type values for `Type` annotations
+[cols='1,1',options="header"]
+|===
+|`Type` annotation value
+|`:_mod-docs-content-type:` value
+
+|`assembly`
+|`ASSEMBLY`
+
+|`concept`
+|`CONCEPT`
+
+|`procedure`
+|`PROCEDURE`
+
+|`reference`
+|`REFERENCE`
+
+|===
+
+The `Type` annotation value is case-insensitive; `Assembly`, `ASSEMBLY`, and `assembly` all produce `:_mod-docs-content-type: ASSEMBLY`.
+
+The `continue`, `skip`, and `module` types do not generate standalone files, so no content-type attribute is inserted for them.
+If Nebel encounters a completely unknown `Type` value, it prints a `WARNING` message and omits the content-type line instead of writing an invalid value.
+
+==== Abstract role
+
+Nebel inserts `[role="_abstract"]` on its own line immediately before the first body-text paragraph of each modular file.
+The following rules determine what counts as the first body-text paragraph:
+
+* Blank lines, AsciiDoc comment lines (starting with `//`), AsciiDoc attribute entries (`:name: value`), and `include::` directives are *not* body text and are skipped.
+* The first line that is not one of the above types is the first body-text line.
+  `[role="_abstract"]` is placed directly before it.
+* If the first substantive line is already `[role="_abstract"]`, no duplicate is inserted.
+* If no body text exists after the title, a `WARNING` is printed and no abstract role is inserted.
+
+When Nebel generates a file from a template (that is, no `filecontents` were provided during splitting), the templates already contain `[role="_abstract"]` in the correct position, so Nebel does not insert a second one.
+
+==== Idempotency
+
+Running `nebel split` again on the same upstream source does not duplicate either insertion.
+The `nebel update --fix-links` run processes files line by line and modifies only cross-reference links, so it does not alter or duplicate the content-type attribute or the abstract role.
+
+==== Before and after examples
+
+.Example: assembly (before splitting)
+[source,asciidoc]
+----
+// Category: debezium-using
+// Type: assembly
+// ModuleID: configuring-debezium-logging
+// Title: Configuring {prodname} logging
+[[configuring-logging]]
+= Configuring logging
+
+By default, {prodname} connectors write all `INFO`, `WARN`, and `ERROR` messages to the console.
+You can change the default logging configuration by using one of the following methods:
+----
+
+.Example: assembly (generated output)
+[source,asciidoc]
+----
+// Metadata created by nebel
+//
+// ConversionStatus: raw
+// ConvertedFromTitle: Configuring logging
+// ConvertedFromFile: upstream/debezium/debezium-3.6/documentation/modules/ROOT/pages/operations/logging.adoc
+// ConvertedFromID: configuring-logging
+
+:_mod-docs-content-type: ASSEMBLY
+[id="configuring-debezium-logging"]
+= Configuring {prodname} logging
+
+[role="_abstract"]
+By default, {prodname} connectors write all `INFO`, `WARN`, and `ERROR` messages to the console.
+You can change the default logging configuration by using one of the following methods:
+----
+
+.Example: procedure module (before splitting)
+[source,asciidoc]
+----
+// Type: procedure
+// ModuleID: changing-the-debezium-logging-level
+// Title: Setting the logging level by configuring loggers
+[[changing-the-logging-level]]
+== Changing the logging level
+
+You can change the logging level by editing the Log4j configuration file.
+
+.Prerequisites
+...
+----
+
+.Example: procedure module (generated output)
+[source,asciidoc]
+----
+// Metadata created by nebel
+//
+// ConversionStatus: raw
+// ConvertedFromTitle: Changing the logging level
+// ConvertedFromFile: upstream/debezium/debezium-3.6/documentation/modules/ROOT/pages/operations/logging.adoc
+// ConvertedFromID: changing-the-logging-level
+
+:_mod-docs-content-type: PROCEDURE
+[id="changing-the-debezium-logging-level"]
+= Setting the logging level by configuring loggers
+
+[role="_abstract"]
+You can change the logging level by editing the Log4j configuration file.
+
+.Prerequisites
+...
+----
+
+
 [id="nebel-split-annotations-reference"]
 === Nebel split annotations reference
 
